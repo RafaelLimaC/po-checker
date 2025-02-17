@@ -1,69 +1,152 @@
 
 import { useState } from "react";
-import { FileUpload } from "@/components/FileUpload";
-import { ResultsTable } from "@/components/ResultsTable";
-import { ResultsChart } from "@/components/ResultsChart";
-import { ComparisonResult, PurchaseOrder, Invoice } from "@/types";
-import { parsePurchaseOrders, parseInvoices, comparePoWithInvoices } from "@/utils/csvParser";
+import { parsePOsCSV, parseInvoicesCSV, calculatePOUsage, type POUsage } from "@/utils/csvProcessor";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/use-toast";
+
+const formatCurrency = (value: number) => {
+  return value.toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  });
+};
 
 const Index = () => {
-  const [results, setResults] = useState<ComparisonResult[]>([]);
-  const [pos, setPOs] = useState<PurchaseOrder[]>([]);
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [poData, setPOData] = useState<POUsage[]>([]);
+  const [skippedLines, setSkippedLines] = useState<{ pos: number[], invoices: number[] }>({
+    pos: [],
+    invoices: [],
+  });
+  const { toast } = useToast();
 
-  const handlePOFileLoaded = (content: string) => {
-    const parsedPOs = parsePurchaseOrders(content);
-    setPOs(parsedPOs);
-    if (invoices.length > 0) {
-      setResults(comparePoWithInvoices(parsedPOs, invoices));
-    }
-  };
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>, fileType: 'po' | 'invoice') => {
+    const file = event.target.files?.[0];
+    if (!file) return;
 
-  const handleInvoiceFileLoaded = (content: string) => {
-    const parsedInvoices = parseInvoices(content);
-    setInvoices(parsedInvoices);
-    if (pos.length > 0) {
-      setResults(comparePoWithInvoices(pos, parsedInvoices));
+    try {
+      const content = await file.text();
+      if (fileType === 'po') {
+        const { data: pos, skippedLines: posSkipped } = parsePOsCSV(content);
+        const invoices = poData.length > 0 
+          ? parseInvoicesCSV(await (document.getElementById('invoiceFile') as HTMLInputElement)?.files?.[0]?.text() || '').data 
+          : [];
+        const usage = calculatePOUsage(pos, invoices);
+        setPOData(usage);
+        setSkippedLines(prev => ({ ...prev, pos: posSkipped }));
+      } else {
+        const { data: invoices, skippedLines: invSkipped } = parseInvoicesCSV(content);
+        const { data: pos } = parsePOsCSV(await (document.getElementById('poFile') as HTMLInputElement)?.files?.[0]?.text() || '');
+        const usage = calculatePOUsage(pos, invoices);
+        setPOData(usage);
+        setSkippedLines(prev => ({ ...prev, invoices: invSkipped }));
+      }
+      toast({
+        title: "Arquivo processado com sucesso!",
+        description: "Os dados foram atualizados na tabela.",
+      });
+    } catch (error) {
+      console.error("Error processing file:", error);
+      toast({
+        title: "Erro ao processar arquivo",
+        description: error instanceof Error ? error.message : "Verifique se o formato do arquivo está correto.",
+        variant: "destructive",
+      });
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="container max-w-6xl mx-auto space-y-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Comparador de POs e Notas Fiscais
-          </h1>
-          <p className="text-gray-600">
-            Faça upload dos arquivos CSV para comparar POs com suas respectivas notas fiscais
+    <div className="container mx-auto p-8 animate-fade-up">
+      <h1 className="text-4xl font-bold mb-8 text-center">Análise de Consumo de POs</h1>
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+        <Card className="p-6 space-y-4">
+          <h2 className="text-xl font-semibold">Arquivo de POs</h2>
+          <p className="text-sm text-muted-foreground">
+            Faça upload do arquivo CSV contendo os dados das POs
           </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <FileUpload
-            label="Arquivo de POs (CSV)"
-            onFileLoaded={handlePOFileLoaded}
+          <input
+            id="poFile"
+            type="file"
+            accept=".csv,.txt"
+            onChange={(e) => handleFileUpload(e, 'po')}
+            className="block w-full text-sm text-slate-500
+              file:mr-4 file:py-2 file:px-4
+              file:rounded-full file:border-0
+              file:text-sm file:font-semibold
+              file:bg-violet-50 file:text-violet-700
+              hover:file:bg-violet-100"
           />
-          <FileUpload
-            label="Arquivo de Notas Fiscais (CSV)"
-            onFileLoaded={handleInvoiceFileLoaded}
+        </Card>
+
+        <Card className="p-6 space-y-4">
+          <h2 className="text-xl font-semibold">Arquivo de Notas Fiscais</h2>
+          <p className="text-sm text-muted-foreground">
+            Faça upload do arquivo CSV contendo os dados das notas fiscais
+          </p>
+          <input
+            id="invoiceFile"
+            type="file"
+            accept=".csv,.txt"
+            onChange={(e) => handleFileUpload(e, 'invoice')}
+            className="block w-full text-sm text-slate-500
+              file:mr-4 file:py-2 file:px-4
+              file:rounded-full file:border-0
+              file:text-sm file:font-semibold
+              file:bg-violet-50 file:text-violet-700
+              hover:file:bg-violet-100"
           />
-        </div>
-
-        {results.length > 0 && (
-          <div className="space-y-8">
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h2 className="text-xl font-semibold mb-4">Distribuição dos Resultados</h2>
-              <ResultsChart results={results} />
-            </div>
-
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h2 className="text-xl font-semibold mb-4">Resultados Detalhados</h2>
-              <ResultsTable results={results} />
-            </div>
-          </div>
-        )}
+        </Card>
       </div>
+
+      {poData.length > 0 && (
+        <div className="overflow-x-auto animate-fade-up">
+          <table className="w-full border-collapse table-auto">
+            <thead>
+              <tr className="bg-muted">
+                <th className="p-4 text-left">PO</th>
+                <th className="p-4 text-left">Linha</th>
+                <th className="p-4 text-left">Data Vencimento</th>
+                <th className="p-4 text-right">Valor Total</th>
+                <th className="p-4 text-right">Valor Usado</th>
+                <th className="p-4 text-right">Valor Restante</th>
+                <th className="p-4 text-right">% Utilizado</th>
+                <th className="p-4 text-left">NFs</th>
+              </tr>
+            </thead>
+            <tbody>
+              {poData.map((row, index) => (
+                <tr key={`${row.po}-${row.line}`} className="border-b hover:bg-muted/50 transition-colors">
+                  <td className="p-4">{row.po}</td>
+                  <td className="p-4">{row.line}</td>
+                  <td className="p-4">{row.dueDate}</td>
+                  <td className="p-4 text-right">{formatCurrency(row.totalPO)}</td>
+                  <td className="p-4 text-right">{formatCurrency(row.used)}</td>
+                  <td className="p-4 text-right">{formatCurrency(row.remaining)}</td>
+                  <td className="p-4 text-right">{row.percentageUsed.toFixed(2)}%</td>
+                  <td className="p-4">{row.invoices.join(", ")}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {(skippedLines.pos.length > 0 || skippedLines.invoices.length > 0) && (
+            <div className="mt-8 p-4 bg-muted rounded-lg">
+              <h3 className="text-lg font-semibold mb-4">Linhas Ignoradas</h3>
+              {skippedLines.pos.length > 0 && (
+                <p className="mb-2">
+                  <strong>Arquivo de POs:</strong> Linhas {skippedLines.pos.join(", ")}
+                </p>
+              )}
+              {skippedLines.invoices.length > 0 && (
+                <p>
+                  <strong>Arquivo de Notas Fiscais:</strong> Linhas {skippedLines.invoices.join(", ")}
+                </p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

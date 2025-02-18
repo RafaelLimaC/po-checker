@@ -18,7 +18,7 @@ export const parsePOsCSV = (content: string): CSVParseResult<PurchaseOrder> => {
       return true;
     })
     .map(({ line }) => {
-      const parts = line.split(';'); // Changed from \t to ;
+      const parts = line.split(';');
       if (parts.length < 16) {
         throw new Error(`Formato inválido na linha: ${line}`);
       }
@@ -42,20 +42,19 @@ export const parsePOsCSV = (content: string): CSVParseResult<PurchaseOrder> => {
         , // Line - Billed Amount in USD (ignored)
       ] = parts;
 
-      if (!po || !lineNum || !totalPO || !lineTotalPO) { // Remover dueDate
+      if (!po || !lineNum || !totalPO || !lineTotalPO) {
         throw new Error(`Dados incompletos na linha: ${line}`);
       }
 
       const parseCurrency = (value: string) => {
-        console.log(`Parsing value: ${value}`);
-        const cleanValue = value.replace('R$', '').replace(/\./g, '').replace(',', '.');
+        const cleanValue = value
+          .replace('R$', '')
+          .replace(/,/g, '')
+          .trim();
+      
         const parsedValue = parseFloat(cleanValue);
-        console.log(`Parsed value: ${parsedValue}`);
         return parsedValue;
       };
-
-      console.log(`Original totalPO: ${totalPO}`);
-      console.log(`Original lineTotalPO: ${lineTotalPO}`);
 
       return {
         po: po.trim(),

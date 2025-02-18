@@ -1,22 +1,4 @@
-
-interface PurchaseOrder {
-  po: string;
-  line: string;
-  dueDate: string;
-  totalPO: number;
-}
-
-interface Invoice {
-  valor: number;
-  po: string;
-  line: string;
-  nfmidia: string;
-}
-
-interface CSVParseResult<T> {
-  data: T[];
-  skippedLines: number[];
-}
+import { PurchaseOrder, Invoice, CSVParseResult, POUsage } from "@/types";
 
 export const parsePOsCSV = (content: string): CSVParseResult<PurchaseOrder> => {
   if (!content) {
@@ -101,17 +83,6 @@ export const parseInvoicesCSV = (content: string): CSVParseResult<Invoice> => {
 
   return { data, skippedLines };
 };
-
-export interface POUsage {
-  po: string;
-  line: string;
-  dueDate: string;
-  totalPO: number;
-  used: number;
-  remaining: number;
-  percentageUsed: number;
-  invoices: string[];
-}
 
 export const calculatePOUsage = (pos: PurchaseOrder[], invoices: Invoice[]): POUsage[] => {
   return pos.map((po) => {

@@ -1,9 +1,9 @@
-
 import { useState } from "react";
-import { parsePOsCSV, parseInvoicesCSV, calculatePOUsage, type POUsage } from "@/utils/csvProcessor";
+import { parsePOsCSV, parseInvoicesCSV, calculatePOUsage } from "@/utils/csvUtils";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
+import { POUsage } from "@/types";
+import FileUpload from "@/components/FileUpload";
 
 const formatCurrency = (value: number) => {
   return value.toLocaleString('pt-BR', {
@@ -60,41 +60,23 @@ const Index = () => {
       <h1 className="text-4xl font-bold mb-8 text-center">Análise de Consumo de POs</h1>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
-        <Card className="p-6 space-y-4">
-          <h2 className="text-xl font-semibold">Arquivo de POs</h2>
-          <p className="text-sm text-muted-foreground">
-            Faça upload do arquivo CSV contendo os dados das POs
-          </p>
-          <input
+        <Card>
+          <FileUpload
             id="poFile"
-            type="file"
-            accept=".csv,.txt"
-            onChange={(e) => handleFileUpload(e, 'po')}
-            className="block w-full text-sm text-slate-500
-              file:mr-4 file:py-2 file:px-4
-              file:rounded-full file:border-0
-              file:text-sm file:font-semibold
-              file:bg-violet-50 file:text-violet-700
-              hover:file:bg-violet-100"
+            label="Arquivo de POs"
+            description="Faça upload do arquivo CSV contendo os dados das POs"
+            fileType="po"
+            onFileUpload={handleFileUpload}
           />
         </Card>
 
-        <Card className="p-6 space-y-4">
-          <h2 className="text-xl font-semibold">Arquivo de Notas Fiscais</h2>
-          <p className="text-sm text-muted-foreground">
-            Faça upload do arquivo CSV contendo os dados das notas fiscais
-          </p>
-          <input
+        <Card>
+          <FileUpload
             id="invoiceFile"
-            type="file"
-            accept=".csv,.txt"
-            onChange={(e) => handleFileUpload(e, 'invoice')}
-            className="block w-full text-sm text-slate-500
-              file:mr-4 file:py-2 file:px-4
-              file:rounded-full file:border-0
-              file:text-sm file:font-semibold
-              file:bg-violet-50 file:text-violet-700
-              hover:file:bg-violet-100"
+            label="Arquivo de Notas Fiscais"
+            description="Faça upload do arquivo CSV contendo os dados das notas fiscais"
+            fileType="invoice"
+            onFileUpload={handleFileUpload}
           />
         </Card>
       </div>
@@ -115,7 +97,7 @@ const Index = () => {
               </tr>
             </thead>
             <tbody>
-              {poData.map((row, index) => (
+              {poData.map((row) => (
                 <tr key={`${row.po}-${row.line}`} className="border-b hover:bg-muted/50 transition-colors">
                   <td className="p-4">{row.po}</td>
                   <td className="p-4">{row.line}</td>

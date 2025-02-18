@@ -1,22 +1,29 @@
-
 export interface PurchaseOrder {
-  number: string;
-  line: number;
-  dueDate: Date;
-  amount: number;
+  po: string;
+  line: string;
+  dueDate: string;
+  totalPO: number;
 }
 
 export interface Invoice {
-  value: number;
-  poReference: string;
-  invoiceNumber: string;
-  poNumber: string;
-  poLine: number;
+  valor: number;
+  po: string;
+  line: string;
+  nfmidia: string;
 }
 
-export interface ComparisonResult {
-  po: PurchaseOrder;
-  invoices: Invoice[];
-  status: 'no-invoice' | 'below' | 'above' | 'match';
-  difference: number;
+export interface CSVParseResult<T> {
+  data: T[];
+  skippedLines: number[];
+}
+
+export interface POUsage {
+  po: string;
+  line: string;
+  dueDate: string;
+  totalPO: number;
+  used: number;
+  remaining: number;
+  percentageUsed: number;
+  invoices: string[];
 }

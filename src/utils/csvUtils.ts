@@ -19,12 +19,30 @@ export const parsePOsCSV = (content: string): CSVParseResult<PurchaseOrder> => {
     })
     .map(({ line }) => {
       const parts = line.split(';'); // Changed from \t to ;
-      if (parts.length !== 4) {
+      if (parts.length < 16) {
         throw new Error(`Formato inválido na linha: ${line}`);
       }
-      const [po, lineNum, dueDate, totalPO] = parts;
-      
-      if (!po || !lineNum || !dueDate || !totalPO) {
+      const [
+        , // Company (ignored)
+        po,
+        , // Source (ignored)
+        lineNum,
+        , // Line Status (ignored)
+        , // Finance Contact (ignored)
+        dueDate,
+        totalPO,
+        , // Total PO - Billed Amount - Billing Currency (ignored)
+        , // Total PO - Request Amount in USD (ignored)
+        , // Line Memo (ignored)
+        , // Purchase Item (ignored)
+        , // Title (ignored)
+        lineTotalPO,
+        , // Line - Billed Amount in Billing Currency (ignored)
+        , // Line - Request Amount in USD (ignored)
+        , // Line - Billed Amount in USD (ignored)
+      ] = parts;
+
+      if (!po || !lineNum || !dueDate || !totalPO || !lineTotalPO) {
         throw new Error(`Dados incompletos na linha: ${line}`);
       }
 
@@ -33,6 +51,7 @@ export const parsePOsCSV = (content: string): CSVParseResult<PurchaseOrder> => {
         line: lineNum.trim(),
         dueDate: dueDate.trim(),
         totalPO: parseFloat(totalPO.replace('.', '').replace(',', '.')),
+        lineTotalPO: parseFloat(lineTotalPO.replace('.', '').replace(',', '.')),
       };
     });
 

@@ -1,9 +1,8 @@
 import { useState } from "react";
-import { parsePOsCSV, parseInvoicesCSV, calculatePOUsage } from "@/utils/csvUtils";
 import { Card } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
 import { POUsage } from "@/types";
-import FileUpload from "@/components/FileUpload";
+import POFileUpload from "@/components/POFileUpload";
+import InvoiceFileUpload from "@/components/InvoiceFileUpload";
 
 const formatCurrency = (value: number) => {
   return value.toLocaleString('pt-BR', {
@@ -18,42 +17,6 @@ const Index = () => {
     pos: [],
     invoices: [],
   });
-  const { toast } = useToast();
-
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>, fileType: 'po' | 'invoice') => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    try {
-      const content = await file.text();
-      if (fileType === 'po') {
-        const { data: pos, skippedLines: posSkipped } = parsePOsCSV(content);
-        const invoices = poData.length > 0 
-          ? parseInvoicesCSV(await (document.getElementById('invoiceFile') as HTMLInputElement)?.files?.[0]?.text() || '').data 
-          : [];
-        const usage = calculatePOUsage(pos, invoices);
-        setPOData(usage);
-        setSkippedLines(prev => ({ ...prev, pos: posSkipped }));
-      } else {
-        const { data: invoices, skippedLines: invSkipped } = parseInvoicesCSV(content);
-        const { data: pos } = parsePOsCSV(await (document.getElementById('poFile') as HTMLInputElement)?.files?.[0]?.text() || '');
-        const usage = calculatePOUsage(pos, invoices);
-        setPOData(usage);
-        setSkippedLines(prev => ({ ...prev, invoices: invSkipped }));
-      }
-      toast({
-        title: "Arquivo processado com sucesso!",
-        description: "Os dados foram atualizados na tabela.",
-      });
-    } catch (error) {
-      console.error("Error processing file:", error);
-      toast({
-        title: "Erro ao processar arquivo",
-        description: error instanceof Error ? error.message : "Verifique se o formato do arquivo está correto.",
-        variant: "destructive",
-      });
-    }
-  };
 
   return (
     <div className="container mx-auto p-8 animate-fade-up">
@@ -61,23 +24,11 @@ const Index = () => {
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
         <Card>
-          <FileUpload
-            id="poFile"
-            label="Arquivo de POs"
-            description="Faça upload do arquivo CSV contendo os dados das POs"
-            fileType="po"
-            onFileUpload={handleFileUpload}
-          />
+          <POFileUpload setPOData={setPOData} setSkippedLines={setSkippedLines} poData={poData} />
         </Card>
 
         <Card>
-          <FileUpload
-            id="invoiceFile"
-            label="Arquivo de Notas Fiscais"
-            description="Faça upload do arquivo CSV contendo os dados das notas fiscais"
-            fileType="invoice"
-            onFileUpload={handleFileUpload}
-          />
+          <InvoiceFileUpload setPOData={setPOData} setSkippedLines={setSkippedLines} poData={poData} />
         </Card>
       </div>
 

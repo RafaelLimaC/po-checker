@@ -46,12 +46,23 @@ export const parsePOsCSV = (content: string): CSVParseResult<PurchaseOrder> => {
         throw new Error(`Dados incompletos na linha: ${line}`);
       }
 
+      const parseCurrency = (value: string) => {
+        console.log(`Parsing value: ${value}`);
+        const cleanValue = value.replace('R$', '').replace(',', '');
+        const parsedValue = parseFloat(cleanValue);
+        console.log(`Parsed value: ${parsedValue}`);
+        return parsedValue;
+      };
+
+      console.log(`Original totalPO: ${totalPO}`);
+      console.log(`Original lineTotalPO: ${lineTotalPO}`);
+
       return {
         po: po.trim(),
         line: lineNum.trim(),
         dueDate: dueDate.trim(),
-        totalPO: parseFloat(totalPO.replace('.', '').replace(',', '.')),
-        lineTotalPO: parseFloat(lineTotalPO.replace('.', '').replace(',', '.')),
+        totalPO: parseCurrency(totalPO),
+        lineTotalPO: parseCurrency(lineTotalPO),
       };
     });
 

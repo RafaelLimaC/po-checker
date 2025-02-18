@@ -1,8 +1,8 @@
 export interface PurchaseOrder {
   po: string;
   line: string;
-  dueDate: string;
   totalPO: number;
+  lineTotalPO: number;
 }
 
 export interface Invoice {
@@ -20,8 +20,8 @@ export interface CSVParseResult<T> {
 export interface POUsage {
   po: string;
   line: string;
-  dueDate: string;
   totalPO: number;
+  lineTotalPO: number;
   used: number;
   remaining: number;
   percentageUsed: number;

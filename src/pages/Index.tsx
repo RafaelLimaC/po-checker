@@ -39,8 +39,8 @@ const Index = () => {
               <tr className="bg-muted">
                 <th className="p-4 text-left">PO</th>
                 <th className="p-4 text-left">Linha</th>
-                <th className="p-4 text-left">Data Vencimento</th>
-                <th className="p-4 text-right">Valor Total</th>
+                <th className="p-4 text-right">Valor Total da Linha</th>
+                <th className="p-4 text-right">Valor Total da PO</th>
                 <th className="p-4 text-right">Valor Usado</th>
                 <th className="p-4 text-right">Valor Restante</th>
                 <th className="p-4 text-right">% Utilizado</th>
@@ -52,7 +52,7 @@ const Index = () => {
                 <tr key={`${row.po}-${row.line}`} className="border-b hover:bg-muted/50 transition-colors">
                   <td className="p-4">{row.po}</td>
                   <td className="p-4">{row.line}</td>
-                  <td className="p-4">{row.dueDate}</td>
+                  <td className="p-4 text-right">{formatCurrency(row.lineTotalPO)}</td>
                   <td className="p-4 text-right">{formatCurrency(row.totalPO)}</td>
                   <td className="p-4 text-right">{formatCurrency(row.used)}</td>
                   <td className="p-4 text-right">{formatCurrency(row.remaining)}</td>

@@ -29,7 +29,7 @@ export const parsePOsCSV = (content: string): CSVParseResult<PurchaseOrder> => {
         lineNum,
         , // Line Status (ignored)
         , // Finance Contact (ignored)
-        dueDate,
+        , // PO Line Due Date (ignored)
         totalPO,
         , // Total PO - Billed Amount - Billing Currency (ignored)
         , // Total PO - Request Amount in USD (ignored)
@@ -42,13 +42,13 @@ export const parsePOsCSV = (content: string): CSVParseResult<PurchaseOrder> => {
         , // Line - Billed Amount in USD (ignored)
       ] = parts;
 
-      if (!po || !lineNum || !dueDate || !totalPO || !lineTotalPO) {
+      if (!po || !lineNum || !totalPO || !lineTotalPO) { // Remover dueDate
         throw new Error(`Dados incompletos na linha: ${line}`);
       }
 
       const parseCurrency = (value: string) => {
         console.log(`Parsing value: ${value}`);
-        const cleanValue = value.replace('R$', '').replace(',', '');
+        const cleanValue = value.replace('R$', '').replace(/\./g, '').replace(',', '.');
         const parsedValue = parseFloat(cleanValue);
         console.log(`Parsed value: ${parsedValue}`);
         return parsedValue;
@@ -60,7 +60,6 @@ export const parsePOsCSV = (content: string): CSVParseResult<PurchaseOrder> => {
       return {
         po: po.trim(),
         line: lineNum.trim(),
-        dueDate: dueDate.trim(),
         totalPO: parseCurrency(totalPO),
         lineTotalPO: parseCurrency(lineTotalPO),
       };
@@ -126,8 +125,8 @@ export const calculatePOUsage = (pos: PurchaseOrder[], invoices: Invoice[]): POU
     return {
       po: po.po,
       line: po.line,
-      dueDate: po.dueDate,
       totalPO: po.totalPO,
+      lineTotalPO: po.lineTotalPO,
       used,
       remaining,
       percentageUsed,
